@@ -26,12 +26,12 @@ public class DhtSearch {
 
 		JSONObject ajson = new JSONObject();
 		ajson.put("id", "FF5C85FE1FDB933503999F9EB2EF59E4B0F51ECA");// 20位发件人的
-		// ajson.put("target", "mnopqrstuvwxyz123456");// 要查询的id
+		 ajson.put("target", "FF5C85FE1FDB933503999F9EB2EF59E4B0F51ECA");// 要查询的id
 		JSONObject object = new JSONObject();
 		object.put("t", "dd");
 		object.put("y", "q");
 		object.put("q", "ping");
-//		object.put("q", "find_node");
+		// object.put("q", "find_node");
 		object.put("a", ajson.toString());
 		byte buf[] = BEncodedOutputStream.bencode(object.toString());
 		// BEncoder bEncoder = new BEncoder();
@@ -59,28 +59,30 @@ public class DhtSearch {
 
 		for (int i = 0; i <= 500; i++) {
 			socket.receive(packet1);
-//			System.out.println("Received from:" + packet1.getSocketAddress());
+			// System.out.println("Received from:" +
+			// packet1.getSocketAddress());
 			final byte[] b = packet1.getData();
-		new Thread(new Runnable() {
-			
-			@Override
-			public void run() {
-				try {
-					handleMsg(b, socket, packet1);
-				} catch (BDecodingException e) {
-					e.printStackTrace();
-				} catch (Exception e) {
-					e.printStackTrace();
+			new Thread(new Runnable() {
+
+				@Override
+				public void run() {
+					try {
+						handleMsg(b, socket, packet1);
+					} catch (BDecodingException e) {
+						e.printStackTrace();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 				}
-			}
-		}).start();
-			
+			}).start();
+
 		}
 
 		socket.close();
 
 	}
-	public static void handleMsg(byte[] b,DatagramSocket socket,DatagramPacket packet1) throws BDecodingException, Exception{
+
+	public static void handleMsg(byte[] b, DatagramSocket socket, DatagramPacket packet1) throws BDecodingException, Exception {
 		// System.out.println(b);
 
 		// System.out.println("q=" + q);
@@ -91,17 +93,18 @@ public class DhtSearch {
 			bMap = (BMap) BEncodedInputStream.bdecode(b);
 			System.out.println(bMap);
 		} catch (Exception e1) {
-//			e1.printStackTrace();
-			System.out.println("取错="+BEncodedInputStream.bdecode(b));
-//			Hash hastinfo_hash = new Hash((byte[]) BEncodedInputStream.bdecode(b), Type.ID);
-			System.out.println("cgp="+new String((byte[])BEncodedInputStream.bdecode(b)));
+			// e1.printStackTrace();
+			System.out.println("取错=" + BEncodedInputStream.bdecode(b));
+			// Hash hastinfo_hash = new Hash((byte[])
+			// BEncodedInputStream.bdecode(b), Type.ID);
+			System.out.println("cgp=" + new String((byte[]) BEncodedInputStream.bdecode(b)));
 			return;
 		}
 		String q = bMap.getString("q");
 
 		System.out.println("q=" + bMap.getString("q"));
 		// System.out.println("t=" + bMap.getString("t"));
-//		System.out.println("y=" + bMap.getString("y"));
+		// System.out.println("y=" + bMap.getString("y"));
 		// if(!bMap.getString("y").equals("r")){
 		// continue;
 		// }
@@ -113,15 +116,15 @@ public class DhtSearch {
 		try {
 			byte[] bb = (byte[]) aa.get("id");
 			Hash hash = new Hash(bb, Type.ID);
-			id= hash.asHexString();
-			// System.out.println("id=" + hash.asHexString());
+			id = hash.asHexString();
+			System.out.println("id=" + hash.asHexString());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
 		try {
-			if(aa.containsKey("target")){
+			if (aa.containsKey("target")) {
 				byte[] target = (byte[]) aa.get("target");
 				Hash hastargeth = new Hash(target, Type.SHA1);
 			}
@@ -225,7 +228,7 @@ public class DhtSearch {
 	}
 
 	// target要查询的id
-	public static   void sendMsg(DatagramSocket socket, String target, SocketAddress direction) throws Exception {
+	public static void sendMsg(DatagramSocket socket, String target, SocketAddress direction) throws Exception {
 		JSONObject ajson = new JSONObject();
 		ajson.put("id", "12345678901234567890");// 20位发件人的
 		ajson.put("target", target);// 要查询的id
@@ -236,7 +239,7 @@ public class DhtSearch {
 		object.put("a", ajson.toString());
 		// BEncoder bEncoder = new BEncoder();
 		byte buf[] = BEncodedOutputStream.bencode(object.toString());
-//		System.out.println("收到find后重新查询他" + object.toString());
+		// System.out.println("收到find后重新查询他" + object.toString());
 		DatagramPacket packet = new DatagramPacket(buf, buf.length, direction);
 		socket.send(packet);
 	}
