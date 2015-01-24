@@ -28,6 +28,7 @@ public class BDecoder {
 
 	public Object decode() throws IOException {
 		marker = getNextMarker();
+//		System.out.println((char)marker);
 		if (marker == -1) {
 			return null;
 		}

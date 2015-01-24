@@ -8,5 +8,6 @@
 	<classpathentry kind="lib" path="libs/json-lib-1.1-jdk13.jar"/>
 	<classpathentry kind="lib" path="libs/commons-logging.jar"/>
 	<classpathentry kind="lib" path="libs/ezmorph-1.0.2.jar"/>
+	<classpathentry kind="lib" path="libs/org.yaircc.torrent-0.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
