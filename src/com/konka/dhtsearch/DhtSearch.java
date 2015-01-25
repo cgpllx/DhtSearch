@@ -56,8 +56,9 @@ public class DhtSearch {
 		// DatagramSocket socket = new DatagramSocket(55555);
 		byte[] buf1 = new byte[1024];
 		final DatagramPacket packet1 = new DatagramPacket(buf1, buf1.length);
-
-		for (int i = 0; i <= 500; i++) {
+//		socket.
+//		socket.bind(packet.getSocketAddress());
+		for (int i = 0; i <= 5000; i++) {
 			socket.receive(packet1);
 			// System.out.println("Received from:" +
 			// packet1.getSocketAddress());
@@ -91,20 +92,20 @@ public class DhtSearch {
 		BMap bMap;
 		try {
 			bMap = (BMap) BEncodedInputStream.bdecode(b);
-			System.out.println(bMap);
+//			System.out.println(bMap);
 		} catch (Exception e1) {
 			// e1.printStackTrace();
-			System.out.println("取错=" + BEncodedInputStream.bdecode(b));
+//			System.out.println("取错=" + BEncodedInputStream.bdecode(b));
 			// Hash hastinfo_hash = new Hash((byte[])
 			// BEncodedInputStream.bdecode(b), Type.ID);
-			System.out.println("cgp=" + new String((byte[]) BEncodedInputStream.bdecode(b)));
+//			System.out.println("cgp=" + new String((byte[]) BEncodedInputStream.bdecode(b)));
 			return;
 		}
 		String q = bMap.getString("q");
 
-		System.out.println("q=" + bMap.getString("q"));
+//		System.out.println("q=" + bMap.getString("q"));
 		// System.out.println("t=" + bMap.getString("t"));
-		// System.out.println("y=" + bMap.getString("y"));
+		 System.out.println("y============" + bMap.getString("y"));
 		// if(!bMap.getString("y").equals("r")){
 		// continue;
 		// }
@@ -117,7 +118,7 @@ public class DhtSearch {
 			byte[] bb = (byte[]) aa.get("id");
 			Hash hash = new Hash(bb, Type.ID);
 			id = hash.asHexString();
-			System.out.println("id=" + hash.asHexString());
+//			System.out.println("id=" + hash.asHexString());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -168,7 +169,7 @@ public class DhtSearch {
 			bb.put("y", "r");
 			bb.put("r", aa1.toString());
 			String ps = bb.toString();
-			System.out.println("响应ping=" + ps);
+//			System.out.println("响应ping=" + ps);
 			byte[] buf11 = BEncodedOutputStream.bencode(ps);
 			DatagramPacket packet11 = new DatagramPacket(buf11, buf11.length, packet1.getSocketAddress());
 			socket.send(packet11);
