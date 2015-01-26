@@ -1,86 +1,115 @@
 package com.konka.dhtsearch;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.HashMap;
-import java.util.Map;
 
 import net.sf.json.JSONObject;
 
 import org.yaircc.torrent.bencoding.BDecodingException;
 import org.yaircc.torrent.bencoding.BEncodedInputStream;
 import org.yaircc.torrent.bencoding.BEncodedOutputStream;
+//import org.yaircc.torrent.bencoding.BDecodingException;
+//import org.yaircc.torrent.bencoding.BEncodedInputStream;
+//import org.yaircc.torrent.bencoding.BEncodedOutputStream;
 import org.yaircc.torrent.bencoding.BMap;
-import org.yaircc.torrent.bencoding.BTypeException;
 import org.yaircc.torrent.data.Hash;
 import org.yaircc.torrent.data.Hash.Type;
 
+import ua.com.alexandr.bencode.BEncoder;
+
 public class DhtSearch {
 
-	@SuppressWarnings("unchecked")
+	static SocketAddress[] addresss = { //
+	new InetSocketAddress("router.bittorrent.com", 6881), //
+			new InetSocketAddress("dht.transmissionbt.com", 6881),//
+			new InetSocketAddress("router.utorrent.com", 6881) };
+
 	public static void main(String args[]) throws Exception {
+		// new InetSocketAddress("router.bittorrent.com", 6881),
+		// new InetSocketAddress("dht.transmissionbt.com", 6881),
+		// new InetSocketAddress("router.utorrent.com", 6881)
+		InetAddress inetAddress = InetAddress.getByName("0.0.0.0");
+		final DatagramSocket socket = new DatagramSocket(9500, inetAddress);
 
-		JSONObject ajson = new JSONObject();
-		ajson.put("id", "FF5C85FE1FDB933503999F9EB2EF59E4B0F51ECA");// 20位发件人的
-		 ajson.put("target", "FF5C85FE1FDB933503999F9EB2EF59E4B0F51ECA");// 要查询的id
-		JSONObject object = new JSONObject();
-		object.put("t", "dd");
-		object.put("y", "q");
-		object.put("q", "ping");
-		// object.put("q", "find_node");
-		object.put("a", ajson.toString());
-		byte buf[] = BEncodedOutputStream.bencode(object.toString());
-		// BEncoder bEncoder = new BEncoder();
-		// byte buf[] = bEncoder.bencode(object.toString());
-		System.out.println(object.toString());
-		InetAddress address = InetAddress.getByName("0.0.0.0");
-		final DatagramSocket socket = new DatagramSocket(9500, address);
-		// It
-		// byte buf[] = msg.getBytes();
-		// DatagramPacket packet = new DatagramPacket(buf, buf.length,
-		// InetAddress.getByName("198.98.102.169"), 55555);
-		// packet.
-		DatagramPacket packet = new DatagramPacket(buf, buf.length, InetAddress.getByName("67.215.246.10"), 6881);
-		// DatagramPacket packet = new DatagramPacket(buf, buf.length,
-		// InetAddress.getByName("91.121.60.42"), 6881);
-		// DatagramPacket packet = new DatagramPacket(buf, buf.length,
-		// InetAddress.getByName("router.bittorrent.com"), 6881);
-		socket.send(packet);
-		// nodes = [["127.0.0.1", 9500], ["your.router.node", 4804]]
-		System.out.println("发送完成");
-
-		// DatagramSocket socket = new DatagramSocket(55555);
-		byte[] buf1 = new byte[1024];
-		final DatagramPacket packet1 = new DatagramPacket(buf1, buf1.length);
-//		socket.
-//		socket.bind(packet.getSocketAddress());
-		for (int i = 0; i <= 5000; i++) {
-			socket.receive(packet1);
-			// System.out.println("Received from:" +
-			// packet1.getSocketAddress());
-			final byte[] b = packet1.getData();
-			new Thread(new Runnable() {
-
-				@Override
-				public void run() {
-					try {
-						handleMsg(b, socket, packet1);
-					} catch (BDecodingException e) {
-						e.printStackTrace();
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-			}).start();
+		for (SocketAddress address : addresss) {
+			// socket.bind(address);
+			for (int i = 0; i < 50; i++) {
+				find_node(socket, Util.sha(rundom_id(20)), address);
+			}
 
 		}
+		Thread thread = new Thread() {
+			@Override
+			public void run() {
+				super.run();
+				startservice(socket);
+			}
+		};
+		thread.start();
+		// DatagramSocket socket = new DatagramSocket(55555);
+
+		// socket.
+		// socket.bind(packet.getSocketAddress());
+		// for (int i = 0; i <= 5000; i++) {
+		// socket.receive(packet1);
+		// // System.out.println("Received from:" +
+		// // packet1.getSocketAddress());
+		// final byte[] b = packet1.getData();
+		// new Thread(new Runnable() {
+		//
+		// @Override
+		// public void run() {
+		// try {
+		// handleMsg(b, socket, packet1);
+		// } catch (BDecodingException e) {
+		// e.printStackTrace();
+		// } catch (Exception e) {
+		// e.printStackTrace();
+		// }
+		// }
+		// }).start();
+		//
+		// }
+
+		// socket.close();
+
+	}
+
+	public static void startservice(DatagramSocket socket) {
+		for (int i = 0; i < 1000; i++) {
+			byte[] buf1 = new byte[1024];
+			DatagramPacket packet = new DatagramPacket(buf1, buf1.length);
+			try {
+				// System.out.println("等接受信息");
+				socket.receive(packet);
+				byte[] b = packet.getData();
+				// System.out.println("收到信息了");
+				handleMsg(b);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		stop(socket);
+	}
+
+	public static void stop(DatagramSocket socket) {
 
 		socket.close();
+	}
 
+	public static void handleMsg(byte[] b) throws Exception {
+		// BDecoder bd=new BDecoder(b);
+		BMap bMap = (BMap) BEncodedInputStream.bdecode(b);
+		if (bMap.getString("y").equals("r")) {
+			System.out.println("y============" + bMap.getString("y"));
+			System.out.println("r============" + bMap.getMap("r"));
+			// System.out.println("q=" + bMap.getString("q"));
+			System.out.println("t=" + bMap.getString("t"));
+		}
 	}
 
 	public static void handleMsg(byte[] b, DatagramSocket socket, DatagramPacket packet1) throws BDecodingException, Exception {
@@ -92,20 +121,20 @@ public class DhtSearch {
 		BMap bMap;
 		try {
 			bMap = (BMap) BEncodedInputStream.bdecode(b);
-//			System.out.println(bMap);
+			// System.out.println(bMap);
 		} catch (Exception e1) {
 			// e1.printStackTrace();
-//			System.out.println("取错=" + BEncodedInputStream.bdecode(b));
+			// System.out.println("取错=" + BEncodedInputStream.bdecode(b));
 			// Hash hastinfo_hash = new Hash((byte[])
 			// BEncodedInputStream.bdecode(b), Type.ID);
-//			System.out.println("cgp=" + new String((byte[]) BEncodedInputStream.bdecode(b)));
+			// System.out.println("cgp=" + new String((byte[]) BEncodedInputStream.bdecode(b)));
 			return;
 		}
 		String q = bMap.getString("q");
 
-//		System.out.println("q=" + bMap.getString("q"));
+		// System.out.println("q=" + bMap.getString("q"));
 		// System.out.println("t=" + bMap.getString("t"));
-		 System.out.println("y============" + bMap.getString("y"));
+		System.out.println("y============" + bMap.getString("y"));
 		// if(!bMap.getString("y").equals("r")){
 		// continue;
 		// }
@@ -118,7 +147,7 @@ public class DhtSearch {
 			byte[] bb = (byte[]) aa.get("id");
 			Hash hash = new Hash(bb, Type.ID);
 			id = hash.asHexString();
-//			System.out.println("id=" + hash.asHexString());
+			// System.out.println("id=" + hash.asHexString());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -169,7 +198,7 @@ public class DhtSearch {
 			bb.put("y", "r");
 			bb.put("r", aa1.toString());
 			String ps = bb.toString();
-//			System.out.println("响应ping=" + ps);
+			// System.out.println("响应ping=" + ps);
 			byte[] buf11 = BEncodedOutputStream.bencode(ps);
 			DatagramPacket packet11 = new DatagramPacket(buf11, buf11.length, packet1.getSocketAddress());
 			socket.send(packet11);
@@ -180,7 +209,7 @@ public class DhtSearch {
 			// map_node.put("127.0.0.1", 9500);
 			// String nodes = [["127.0.0.1", 9500], ["your.router.node",
 			// 4804]];
-			sendMsg(socket, id, packet1.getSocketAddress());
+			// sendMsg(socket, id, packet1.getSocketAddress());
 			// DatagramPacket packet11 = new DatagramPacket(buf11,
 			// buf11.length, packet1.getSocketAddress());
 
@@ -228,20 +257,40 @@ public class DhtSearch {
 		// }
 	}
 
+	public static String rundom_id(int length) {
+		StringBuilder builder = new StringBuilder();
+		for (int i = 0; i < length; i++) {
+			char c = (char) (Math.random() * 255);
+			builder.append(c);
+		}
+		return builder.toString();
+	}
+
 	// target要查询的id
-	public static void sendMsg(DatagramSocket socket, String target, SocketAddress direction) throws Exception {
-		JSONObject ajson = new JSONObject();
-		ajson.put("id", "12345678901234567890");// 20位发件人的
-		ajson.put("target", target);// 要查询的id
-		JSONObject object = new JSONObject();
-		object.put("t", "aa");
-		object.put("y", "q");
-		object.put("q", "find_node");
-		object.put("a", ajson.toString());
-		// BEncoder bEncoder = new BEncoder();
-		byte buf[] = BEncodedOutputStream.bencode(object.toString());
-		// System.out.println("收到find后重新查询他" + object.toString());
+	public static void find_node(DatagramSocket socket, String target, SocketAddress direction) throws Exception {
+//		JSONObject ajson = new JSONObject();
+//		ajson.put("id", Util.sha(rundom_id(20)));// 20位发件人的
+//		ajson.put("target", target);// 要查询的id
+//		JSONObject object = new JSONObject();
+//		object.put("t", rundom_id(4));
+//		object.put("y", "q");
+//		object.put("q", "find_node");
+//		object.put("a", ajson.toString());
+		
+		BEncoder bEncoder = new BEncoder();
+		HashMap<String, Object> hashBMap = new HashMap<String, Object>();
+		hashBMap.put("t", rundom_id(4));
+		hashBMap.put("y", "q");
+		hashBMap.put("q", "find_node");
+		HashMap<String, Object> aa = new HashMap<String, Object>();
+		aa.put("id", Util.sha(rundom_id(20)));
+		aa.put("target", target);
+		hashBMap.put("a", System.currentTimeMillis() + "");
+		// byte buf[] = BEncodedOutputStream.bencode(hashBMap);
+		byte buf[] = bEncoder.bencode(hashBMap);
+		System.out.println("findnode=" + new String(buf));
 		DatagramPacket packet = new DatagramPacket(buf, buf.length, direction);
 		socket.send(packet);
+		System.out.println("find_node");
 	}
 }
